@@ -6,6 +6,7 @@ pre-deliberation position is preserved so agreement and accuracy can be told apa
 """
 from .council import Council, CouncilResult, MemberOpinion, run_sync
 from .rubric import Band, Dimension, Rubric, Verdict
+from .stability import StabilityReport, run_repeated
 from .transcript import Transcript
 from .transport import Reply, Transport, extract_json
 
@@ -18,9 +19,11 @@ __all__ = [
     "MemberOpinion",
     "Reply",
     "Rubric",
+    "StabilityReport",
     "Transcript",
     "Transport",
     "Verdict",
     "extract_json",
+    "run_repeated",
     "run_sync",
 ]
