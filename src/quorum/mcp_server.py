@@ -35,7 +35,7 @@ except ImportError as exc:  # pragma: no cover
 DEFAULT_MODELS = [
     "openai/gpt-5.6-luna-pro",
     "anthropic/claude-opus-4.8",
-    "google/gemini-2.5-pro",
+    "x-ai/grok-4.5",
     "perplexity/sonar-pro",
     "deepseek/deepseek-chat",
 ]

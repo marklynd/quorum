@@ -62,16 +62,27 @@ class StabilityReport:
 
 
 async def run_repeated(council: Council, claim: str, evidence: str, context: str = "",
-                       runs: int = 3) -> StabilityReport:
+                       runs: int = 3, on_run=None) -> StabilityReport:
     """Run the council ``runs`` times and report the median with its variance.
 
     Runs are sequential rather than concurrent. Firing fifteen simultaneous calls at one
     provider invites rate limiting, and a rate-limited run is not an independent sample of
     anything.
+
+    :param on_run: optional callback ``(index, total, CouncilResult)`` invoked after each run.
+        Repeated runs take minutes. A caller that cannot see progress cannot tell a slow run
+        from a hung one, which is exactly the confusion this library exists to remove, so the
+        hook is here rather than left to the caller to invent.
     """
     results: list[CouncilResult] = []
-    for _ in range(runs):
-        results.append(await council.run(claim, evidence, context))
+    for i in range(runs):
+        result = await council.run(claim, evidence, context)
+        results.append(result)
+        if on_run is not None:
+            try:
+                on_run(i + 1, runs, result)
+            except Exception:  # noqa: BLE001 - a broken callback must not lose the run
+                pass
 
     valid = [r for r in results if r.quorum_met and r.consensus_total is not None]
     report = StabilityReport(
