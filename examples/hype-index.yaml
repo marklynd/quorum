@@ -1,0 +1,63 @@
+# The rubric The Hype Index uses in production. Higher means the claim has travelled further
+# from what its evidence supports, so a low score is good news for the claim.
+name: The Hype Index
+description: >
+  Scores how far a widely repeated public claim sits from what its evidence actually supports.
+  You are scoring the claim as it circulates, not the quality of the research behind it. Strong
+  research being misused scores badly.
+scale_note: Five dimensions, twenty points each. Higher is worse for the claim.
+direction: higher_is_worse
+
+dimensions:
+  - name: Source quality
+    max_points: 20
+    question: What is the artifact, really?
+    bands:
+      - { lo: 0,  hi: 4,  label: "Peer reviewed, or a government or regulatory dataset released with its methodology." }
+      - { lo: 5,  hi: 9,  label: "Preprint, working paper, or an official statistical release that has not been reviewed." }
+      - { lo: 10, hi: 14, label: "Self-published research with a disclosed methodology, from any party." }
+      - { lo: 15, hi: 17, label: "Self-published research with no methodology, or a summary article standing in for a study." }
+      - { lo: 18, hi: 20, label: "Press release, marketing material, or no identifiable source at all." }
+  - name: Sample and method
+    max_points: 20
+    question: How was it measured, and on whom?
+    bands:
+      - { lo: 0,  hi: 4,  label: "Large, randomly selected or census-level, with the underlying data published." }
+      - { lo: 5,  hi: 9,  label: "Large and well described, but the data is not available for independent inspection." }
+      - { lo: 10, hi: 14, label: "Adequate size, self-selected or convenience sample, method disclosed." }
+      - { lo: 15, hi: 17, label: "Small or unrepresentative sample, or a modeled estimate presented as a measurement." }
+      - { lo: 18, hi: 20, label: "Sample size or selection not stated at all." }
+  - name: Independence
+    max_points: 20
+    question: Does the publisher sell the remedy its own finding recommends?
+    bands:
+      - { lo: 0,  hi: 4,  label: "Published by a party with no commercial interest in the conclusion." }
+      - { lo: 5,  hi: 9,  label: "Publisher has an indirect interest, offset by independent co-authors or external review." }
+      - { lo: 10, hi: 14, label: "Publisher benefits from the conclusion but the finding concerns the whole category, not its own product." }
+      - { lo: 15, hi: 17, label: "Publisher sells a product or credential positioned as the remedy for the problem the finding describes." }
+      - { lo: 18, hi: 20, label: "Publisher sells the remedy and the finding is the primary marketing asset for it." }
+  - name: Replication
+    max_points: 20
+    question: Has anyone independent reproduced it?
+    bands:
+      - { lo: 0,  hi: 4,  label: "Independently reproduced more than once with comparable method and result." }
+      - { lo: 5,  hi: 9,  label: "Reproduced once independently, or corroborated by a separate measure using the same method." }
+      - { lo: 10, hi: 14, label: "Not reproduced. Supporting evidence exists but comes from interested parties or a different method." }
+      - { lo: 15, hi: 17, label: "Not reproduced, and an independent measure of the same thing disagrees materially." }
+      - { lo: 18, hi: 20, label: "Not reproduced, and the original publisher has stopped standing behind it." }
+  - name: Drift
+    max_points: 20
+    question: How far is the popular use of the claim from what the source says?
+    bands:
+      - { lo: 0,  hi: 4,  label: "Used exactly as measured, on the population and conditions it was measured on." }
+      - { lo: 5,  hi: 9,  label: "Minor stretch. A qualifier is softened but the claim stays inside its evidence." }
+      - { lo: 10, hi: 14, label: "A load-bearing qualifier is routinely dropped, or the result is applied to an adjacent population." }
+      - { lo: 15, hi: 17, label: "Applied well outside the measured population, conditions, or timeframe." }
+      - { lo: 18, hi: 20, label: "Quoted after the source has been superseded or withdrawn, or applied to a question it never asked." }
+
+verdicts:
+  - { label: Underrated,  ceiling: 19,  meaning: "The evidence is stronger than the attention it gets." }
+  - { label: Holds Up,    ceiling: 39,  meaning: "The claim survives contact with its own source." }
+  - { label: Half True,   ceiling: 59,  meaning: "Real finding, wrong scope." }
+  - { label: Overstated,  ceiling: 79,  meaning: "Sound evidence, carried far past what it measured." }
+  - { label: Unsupported, ceiling: 100, meaning: "No source that survives inspection." }
