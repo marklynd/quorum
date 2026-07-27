@@ -79,3 +79,24 @@ async def test_names_the_dimension_doing_the_moving():
 
     assert rep.dimension_volatility["A"] > rep.dimension_volatility["B"]
     assert rep.dimension_volatility["B"] == 0
+
+
+@pytest.mark.asyncio
+async def test_the_published_total_is_the_sum_of_its_parts():
+    """A rubric total must decompose, or disputing one component means nothing.
+
+    Median-of-run-totals and sum-of-dimension-medians are different statistics. Production hit a
+    case where they differed by a point, which would have printed a headline score that the five
+    components underneath it did not add up to. The sum is what gets published.
+    """
+    t = ScriptedTransport({
+        "m1": [(4, 9), (5, 10), (6, 8)],
+        "m2": [(5, 8), (6, 9), (4, 10)],
+        "m3": [(6, 10), (4, 8), (5, 9)],
+    })
+    c = Council(["m1", "m2", "m3"], RUBRIC, transport=t, deliberate=False)
+    rep = await run_repeated(c, "claim", "evidence " * 100, runs=3)
+
+    assert rep.median_total == sum(rep.median_scores.values())
+    assert rep.median_verdict == RUBRIC.verdict_for(rep.median_total)
+    assert rep.median_of_run_totals is not None

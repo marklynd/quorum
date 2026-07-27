@@ -15,6 +15,18 @@ GOOD = {
 }
 
 
+def _five_dimension_rubric():
+    """A five-dimension rubric shaped like The Hype Index one, for the filler-response guard."""
+    return Rubric.from_dict({
+        "name": "five",
+        "dimensions": [
+            {"name": n, "max_points": 20,
+             "bands": [{"lo": 0, "hi": 10, "label": "low"}, {"lo": 11, "hi": 20, "label": "high"}]}
+            for n in ("A", "B", "C", "D", "E")],
+        "verdicts": [{"label": "Fine", "ceiling": 50}, {"label": "Bad", "ceiling": 100}],
+    })
+
+
 def test_loads_and_totals():
     r = Rubric.from_dict(GOOD)
     assert r.max_total == 40
@@ -76,3 +88,32 @@ def test_shipped_example_rubric_is_valid():
     assert len(r.dimensions) == 5
     assert r.verdict_for(53) == "Half True"
     assert r.verdict_for(100) == "Unsupported"
+
+
+def test_a_uniform_floor_is_rejected_as_filler_not_scored_as_zero():
+    """The production failure this guard exists for.
+
+    A member returned 0 on all five dimensions while its own summary said the claim was not
+    supported. Numerically valid, internally contradictory, and it moved the published median.
+    """
+    r = _five_dimension_rubric()
+    scores, reason = r.validate_scores({d.name: 0 for d in r.dimensions})
+    assert scores is None
+    assert "filler" in reason
+
+
+def test_a_uniform_ceiling_is_rejected_the_same_way():
+    r = _five_dimension_rubric()
+    scores, reason = r.validate_scores({d.name: d.max_points for d in r.dimensions})
+    assert scores is None
+    assert "filler" in reason
+
+
+def test_a_genuine_low_score_still_passes():
+    """The guard must not swallow a real, considered low score."""
+    r = _five_dimension_rubric()
+    vals = [0, 0, 1, 0, 2]
+    scores, reason = r.validate_scores(
+        {d.name: v for d, v in zip(r.dimensions, vals)})
+    assert reason == ""
+    assert sum(scores.values()) == 3

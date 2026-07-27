@@ -34,6 +34,7 @@ class StabilityReport:
     runs_requested: int
     runs_valid: int
     median_total: int | None = None
+    median_of_run_totals: int | None = None
     median_verdict: str = ""
     median_scores: dict[str, int] = field(default_factory=dict)
     run_totals: list[int] = field(default_factory=list)
@@ -97,14 +98,38 @@ async def run_repeated(council: Council, claim: str, evidence: str, context: str
     totals = sorted(r.consensus_total for r in valid)  # type: ignore[misc]
     report.run_totals = [r.consensus_total for r in valid]  # type: ignore[misc]
     report.run_verdicts = [r.consensus_verdict for r in valid]
-    report.median_total = round(statistics.median(totals))
-    report.median_verdict = council.rubric.verdict_for(report.median_total)
     report.run_range = totals[-1] - totals[0]
     report.run_stdev = round(statistics.stdev(totals), 1) if len(totals) > 1 else 0.0
 
     report.median_scores = {
         d.name: round(statistics.median([r.consensus_scores[d.name] for r in valid]))
         for d in council.rubric.dimensions if all(d.name in r.consensus_scores for r in valid)}
+
+    # The total is the SUM of the per-dimension medians, not the median of the run totals.
+    #
+    # Those are different statistics and they disagree: on one production edition the median of
+    # the run totals was 44 while the dimension medians summed to 43. Taking the median of totals
+    # produces a headline number that does not decompose into the parts printed underneath it,
+    # which destroys the one property that makes a rubric worth having. A reader has to be able to
+    # dispute a single component and know exactly how many points are at stake.
+    #
+    # So the sum wins, and it is reconciled below. The median of run totals is still reported, as
+    # median_of_run_totals, because the gap between the two is itself information about how much
+    # the run-to-run movement is concentrated in one dimension.
+    report.median_of_run_totals = round(statistics.median(totals))
+    if report.median_scores:
+        report.median_total = sum(report.median_scores.values())
+    else:
+        report.median_total = report.median_of_run_totals
+        report.notes.append(
+            "no dimension was scored in every valid run, so the total could not be built from its "
+            "parts and falls back to the median of the run totals.")
+    report.median_verdict = council.rubric.verdict_for(report.median_total)
+    if report.median_total != report.median_of_run_totals:
+        report.notes.append(
+            f"the per-dimension medians sum to {report.median_total}, while the median of the run "
+            f"totals is {report.median_of_run_totals}. The sum is published, so the score always "
+            "decomposes into the components shown beside it.")
 
     # Which dimension is doing the moving. Usually one or two carry most of the instability,
     # and naming them is more useful to a reader than a single overall figure.

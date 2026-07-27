@@ -105,6 +105,28 @@ class Rubric:
         extra = set(scores) - set(self.dimension_names)
         if extra:
             return None, f"unknown dimensions: {sorted(extra)}"
+
+        # Degenerate uniform extremes.
+        #
+        # Observed in production: a member returned 0 on every one of five dimensions while its
+        # own one-line summary said the claim was NOT supported. The score contradicted the
+        # reasoning attached to it, and because it was numerically valid it passed every check
+        # above and dragged the consensus median down across the board.
+        #
+        # A rubric is a set of independent questions. Applying it honestly to a real claim
+        # essentially never returns the identical floor or ceiling on all of them; that pattern is
+        # the signature of a model that emitted a filler object rather than scored anything. So it
+        # is rejected as a failure with a reason, which is the rule this library applies
+        # everywhere else: if you cannot report a real value, report the failure.
+        #
+        # Guarded to 3+ dimensions so a small rubric, where all-equal is plausible, is unaffected.
+        if len(self.dimensions) >= 3:
+            if all(out[d.name] == 0 for d in self.dimensions):
+                return None, ("every dimension returned 0. A uniform floor across the whole rubric "
+                              "is a filler response, not a judgment")
+            if all(out[d.name] == d.max_points for d in self.dimensions):
+                return None, ("every dimension returned its maximum. A uniform ceiling across the "
+                              "whole rubric is a filler response, not a judgment")
         return out, ""
 
     def prompt_block(self) -> str:
